@@ -4,14 +4,13 @@ const connectDB=require("./config/database");
 const User= require("./models/user")
 const bcrypt=require("bcrypt");
 const validateSignUpData=require("./utils/validation");
-
+const cookieParser=require("cookie-parser");
+const jwt=require("jsonwebtoken");
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup",async (req,res)=>{
     
-
-    
-
     try{
         validateSignUpData(req);
         const {firstName,lastName,emailId,password,gender,age}=req.body;
@@ -28,12 +27,15 @@ app.post("/signup",async (req,res)=>{
 app.get("/login",async(req,res)=>{
     try{
         const {emailId,password}= req.body;
+
         const user= await User.findOne({emailId:emailId});
         if(!user){
             throw new Error("Email ID NOT PRESENT");
         }
         const isPasswordValid= await bcrypt.compare(password,user.password);
         if(isPasswordValid){
+            const token=await jwt.sign({_id:user._id},"Muthu@1234");
+            res.cookie("token",token);
             res.send("login sucessful");
         }
         else{
@@ -47,9 +49,28 @@ app.get("/login",async(req,res)=>{
     };
 
 });
+app.get("/profile",async(req,res)=>{
+    try{
+        const {token}=req.cookies;
+        const decodedMsg=await jwt.verify(token,"Muthu@1234");
+        if(!decodedMsg){
+            throw new Error("Invalid token");
+        };
+        const {_id}= decodedMsg;
+        const user=await User.findById(_id);
+        res.send(user);
+
+    }
+
+    catch(err){
+        res.send("Error "+err);
+    }
+})
+
 app.get("/user",async(req,res)=>{
     const userEmail=req.body.emailId;
     try{
+        
         const user= await User.find({emailId:userEmail});
         const users= await User.findOne({});
         if(user.length === 0){
@@ -103,8 +124,8 @@ app.patch("/user/:_id",async(req,res)=>{
 })
 connectDB().then(()=>{
     console.log("database connected");
-    app.listen(3000,()=>{
-        console.log("listening to 3000");
+    app.listen(4000,()=>{
+        console.log("listening to 4000");
     }); 
 
     
