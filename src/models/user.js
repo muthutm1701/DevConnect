@@ -1,37 +1,69 @@
-const mongoose = require("mongoose");
-
-const userSchema = new mongoose.Schema({
-    email: {
-        type: String,
+const mongoose =require("mongoose");
+const validator=require("validator");
+const userSchema = mongoose.Schema({
+    firstName:{
+        type:String,
         required: true,
-        unique: true,
-        trim: true,
+        trim:true,
     },
-    password: {
-        type: String,
-        required: true
+    lastName:{
+        type:String,
+        trim:true,
     },
-    age: {
-        type: Number
-    },
-    gender: {
-        type: String,
-        validate(value) {
-            if (!["male", "female", "others"].includes(value)) {
-                throw new Error("Invalid gender value");
+    emailId:{
+        type:String, 
+        required: true,
+        unique :true,
+        lowercase:true,
+        trim:true,
+        validate(value){
+            if(!validator.isEmail(value)){
+                throw new Error("Invalid email Id "+value);
             }
         }
     },
-    skills: {
-        type: [String],
+    password:{
+        type:String,
+        required: true,
+      
     },
-    photoUrl: {
-        type: String
+    age:{
+        type:Number,
+        required:true,
+        trim:true,
+        min:16,
+    },
+    gender:{
+        type:String,
+        required:true,
+        trim:true,
+        validate(value){
+            if(!["male","female","others"].includes(value)){
+                throw new Error("gender data is not valid")
+            }
+        }
+    },
+    photoUrl:{
+        type:String,
+        validate(value){
+            if(validator.isURL(value)){
+                throw new Error("Invalid url"+value);
+            }
+        }
+    },
+    about:{
+        type:String,
+        default:";)"
+    },
+    skill:{
+        type:[String],
+        default:"member"
+    },
+    Timestamp:{
+
     }
-}, {
-    timestamps: true,
-});
+}) 
 
-const User = mongoose.model("User", userSchema);
+const userModel =mongoose.model("user",userSchema);
 
-module.exports = User;
+module.exports=userModel;
